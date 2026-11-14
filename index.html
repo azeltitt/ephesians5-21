@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}[hidden]{display:none!important}</style>
+<title>The Head and the Body</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: full-height 3D stage on the left, a scripture study panel on the right (stacked on phones). Single night look. */
+:root{
+  --night:#090d1a;
+  --night-2:#121933;
+  --panel:#0e1427;
+  --fg:#ece8df;
+  --muted:#9aa4bd;
+  --line:rgba(190,205,240,.12);
+  --gold:#f0c674;
+  --pearl:#bcd6ff;
+  --serif:"Google Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --sans:"Google Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{background:var(--night);color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.55;overflow:hidden}
+.app{display:grid;grid-template-columns:minmax(0,1fr) 410px;height:100%}
+.stage{position:relative;min-width:0;min-height:0;overflow:hidden;background:var(--night)}
+.stage canvas{display:block;width:100%;height:100%;touch-action:none}
+.top{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:18px 20px;pointer-events:none}
+.brand{pointer-events:none}
+.brand .ref{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.brand h1{font-family:var(--serif);font-weight:500;font-size:24px;line-height:1.05;margin:4px 0 0;text-wrap:balance}
+.views{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;pointer-events:auto;max-width:360px}
+.chip{font:500 12px/1 var(--sans);color:var(--muted);background:rgba(14,20,39,.6);border:1px solid var(--line);border-radius:999px;padding:7px 11px;cursor:pointer;backdrop-filter:blur(6px)}
+.chip:hover{color:var(--fg)}
+.chip[aria-pressed="true"]{color:var(--fg);border-color:rgba(236,232,223,.4)}
+.modes{position:absolute;left:0;right:0;bottom:0;padding:14px 20px 18px;display:flex;gap:8px;overflow-x:auto;justify-content:center}
+.mode{flex:0 0 auto;text-align:left;font-family:var(--sans);color:var(--fg);background:rgba(14,20,39,.7);border:1px solid var(--line);border-radius:12px;padding:9px 14px;cursor:pointer;backdrop-filter:blur(8px);transition:border-color .2s, background .2s}
+.mode b{display:block;font-weight:600;font-size:14px}
+.mode span{display:block;font-size:11.5px;color:var(--muted);margin-top:1px}
+.mode:hover{border-color:rgba(236,232,223,.3)}
+.mode[aria-pressed="true"]{background:rgba(30,38,70,.85);border-color:var(--c, rgba(236,232,223,.55));box-shadow:0 0 0 1px var(--c, transparent) inset}
+.mode[data-k="head"]{--c:var(--gold)}
+.mode[data-k="body"]{--c:var(--pearl)}
+.hint{position:absolute;left:20px;bottom:86px;font-size:12px;color:var(--muted);pointer-events:none}
+.labels{position:absolute;inset:0;pointer-events:none}
+.tag{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:12px;font-weight:500;letter-spacing:.02em;padding:3px 9px;border-radius:999px;transition:opacity .35s;opacity:0}
+.tag.h{color:var(--night);background:var(--gold)}
+.tag.b{color:var(--night);background:var(--pearl)}
+.tag.base{font-family:var(--serif);font-size:15px;font-weight:500;color:var(--fg);background:none;padding:0;opacity:.9}
+.tag.base small{display:block;text-align:center;font-family:var(--sans);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.tag.arc{font-family:var(--serif);font-style:italic;font-size:14px;color:var(--fg);background:none}
+.nogl{position:absolute;inset:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--muted)}
+
+.panel{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;min-height:0;padding-block:28px 40px;padding-left:max(26px, env(safe-area-inset-left,0px));padding-right:max(26px, env(safe-area-inset-right,0px))}
+.eyebrow{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.panel h2{font-family:var(--serif);font-weight:500;font-size:32px;line-height:1;margin:6px 0 4px;text-wrap:balance}
+.role{margin:0 0 18px;font-size:14px;color:var(--accent, var(--fg))}
+.kjv{margin:0 0 18px;padding:16px 18px;border-radius:12px;background:rgba(255,255,255,.03);border:1px solid var(--line);font-family:var(--serif);font-size:17px;line-height:1.5}
+.kjv p{margin:0}
+.kjv p+p{margin-top:8px}
+.vn{font-family:var(--sans);font-size:11px;font-weight:600;color:var(--accent, var(--muted));vertical-align:super;margin-right:4px}
+.kjv cite{display:block;margin-top:10px;font:500 11px/1 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-style:normal}
+.lead{margin:0 0 18px;color:var(--fg)}
+.panel h3{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:600;margin:26px 0 10px}
+.points{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.points li{padding-left:14px;border-left:2px solid var(--accent, var(--line))}
+.points strong{display:block;font-weight:600}
+.points span{color:#c9cdd8}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px}
+.pair button{text-align:left;font-family:var(--sans);color:var(--fg);background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer}
+.pair button:hover{border-color:var(--accent, rgba(236,232,223,.35))}
+.pair b{display:block;font-family:var(--serif);font-size:17px;font-weight:500}
+.pair span{font-size:12px;color:var(--muted)}
+.pair em{display:block;font-style:normal;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.support{display:grid;gap:12px}
+.support div{font-family:var(--serif);font-size:15px;line-height:1.5;color:#c9cdd8}
+.support cite{display:block;font:600 11.5px/1.3 var(--sans);font-style:normal;color:var(--muted);margin-bottom:3px;letter-spacing:.03em}
+.passage{font-family:var(--serif);font-size:14.5px;line-height:1.6}
+.passage span{color:rgba(236,232,223,.38);transition:color .3s}
+.passage span.on{color:var(--fg)}
+.passage span.on .vn{color:var(--accent, var(--gold))}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+td:first-child{white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--muted)}
+.take{margin-top:22px;padding:16px 18px;border-radius:12px;border:1px solid rgba(240,198,116,.35);font-family:var(--serif);font-size:17px;line-height:1.45}
+ol.lessons{margin:0;padding-left:20px;display:grid;gap:8px;color:#c9cdd8}
+ol.lessons b{color:var(--fg);font-weight:600}
+button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+
+@media (max-width:860px){
+  .app{grid-template-columns:minmax(0,1fr);grid-template-rows:56% 44%}
+  .panel{border-left:0;border-top:1px solid var(--line);padding-block:20px 32px;padding-left:max(18px, env(safe-area-inset-left,0px));padding-right:max(18px, env(safe-area-inset-right,0px))}
+  .top{flex-direction:column;padding:14px 16px}
+  .brand h1{font-size:24px}
+  .views{justify-content:flex-start}
+  .modes{justify-content:flex-start;padding:10px 16px 12px}
+  .mode{padding:7px 11px}
+  .hint{display:none}
+  .panel h2{font-size:32px}
+}
+@media (max-width:420px){.views .chip.opt{display:none}}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <section class="stage" id="stage" aria-label="3D figures of the head and the body">
+    <div class="labels" id="labels"></div>
+    <div class="top">
+      <div class="brand">
+        <div class="ref">Ephesians 5:21–33 · KJV</div>
+        <h1>The Head and the Body</h1>
+      </div>
+      <div class="views" role="group" aria-label="Viewpoint">
+        <button class="chip" data-view="front" aria-pressed="true">Front</button>
+        <button class="chip" data-view="left" aria-pressed="false">Husband &amp; Wife</button>
+        <button class="chip" data-view="right" aria-pressed="false">Christ &amp; Church</button>
+        <button class="chip opt" data-view="three" aria-pressed="false">Turned</button>
+        <button class="chip opt" data-view="above" aria-pressed="false">From above</button>
+      </div>
+    </div>
+    <div class="hint">Drag to turn · scroll to zoom · tap a head or a body</div>
+    <div class="modes" role="group" aria-label="What to light up">
+      <button class="mode" data-k="overview"><b>One to another</b><span>v. 21 · the church</span></button>
+      <button class="mode" data-k="head"><b>The Head</b><span>Christ · Husband</span></button>
+      <button class="mode" data-k="body"><b>The Body</b><span>Church · Wife</span></button>
+      <button class="mode" data-k="oneflesh"><b>One</b><span>vv. 31–32</span></button>
+    </div>
+  </section>
+  <aside class="panel" id="panel" aria-live="polite"></aside>
+</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { MarchingCubes } from 'three/addons/objects/MarchingCubes.js';
+
+/* ---------------- Content ---------------- */
+const KJV = {
+  21:"Submitting yourselves one to another in the fear of God.",
+  22:"Wives, submit yourselves unto your own husbands, as unto the Lord.",
+  23:"For the husband is the head of the wife, even as Christ is the head of the church: and he is the saviour of the body.",
+  24:"Therefore as the church is subject unto Christ, so let the wives be to their own husbands in every thing.",
+  25:"Husbands, love your wives, even as Christ also loved the church, and gave himself for it;",
+  26:"That he might sanctify and cleanse it with the washing of water by the word,",
+  27:"That he might present it to himself a glorious church, not having spot, or wrinkle, or any such thing; but that it should be holy and without blemish.",
+  28:"So ought men to love their wives as their own bodies. He that loveth his wife loveth himself.",
+  29:"For no man ever yet hated his own flesh; but nourisheth and cherisheth it, even as the Lord the church:",
+  30:"For we are members of his body, of his flesh, and of his bones.",
+  31:"For this cause shall a man leave his father and mother, and shall be joined unto his wife, and they two shall be one flesh.",
+  32:"This is a great mystery: but I speak concerning Christ and the church.",
+  33:"Nevertheless let every one of you in particular so love his wife even as himself; and the wife see that she reverence her husband."
+};
+const GOLD='#f0c674', PEARL='#bcd6ff';
+
+const C = {
+  overview:{
+    eyebrow:"Ephesians 5:21", title:"One to Another", role:"In the fear of God", accent:null,
+    quote:[21], verses:[21],
+    lead:"Verse 21 follows Paul's command to be filled with the Spirit (5:18). The small figures in the circle are members of the church, each linked to every other. Submitting to one another is a practical expression of Spirit-filled living for the whole congregation. Paul then turns to marriage as one relationship where this is lived out.",
+    points:[
+      ["Mutual submission in the church","Every believer submits to the others, moved by reverence for God. No member is exempt."],
+      ["Distinct responsibilities","This does not give everyone identical roles or authority. Paul goes on to show how submission works within marriage."],
+      ["In the fear of God","Reverence for God governs how we treat one another, rather than selfishness or pride."]
+    ],
+    supports:[
+      ["Philippians 2:3","Let nothing be done through strife or vainglory; but in lowliness of mind let each esteem other better than themselves."],
+      ["1 Peter 5:5","Yea, all of you be subject one to another, and be clothed with humility: for God resisteth the proud, and giveth grace to the humble."]
+    ],
+    summary:true,
+    light:{L:[.12,.12],R:[.12,.12],arc:0,motes:.1,crowd:1}
+  },
+  head:{
+    eyebrow:"Ephesians 5:23", title:"The Head", role:"Christ · Husband", accent:GOLD,
+    quote:[23], verses:[23],
+    lead:"The left head is the husband. The right head is Christ. Paul sets them side by side: the husband is head of the wife, even as Christ is head of the church.",
+    points:[
+      ["God-given order","Headship establishes the biblical order of authority within marriage."],
+      ["Equal worth, distinct roles","Husband and wife have equal worth before God. They carry different responsibilities."],
+      ["Headship shaped by Christ","The husband's headship takes its pattern from Christ's sacrificial love. It leaves no room for selfishness or harshness."]
+    ],
+    pair:[["christ","Right figure","Christ","Head of the church"],["husband","Left figure","Husband","Head of the wife"]],
+    supports:[
+      ["1 Corinthians 11:3","But I would have you know, that the head of every man is Christ; and the head of the woman is the man; and the head of Christ is God."],
+      ["Ephesians 1:22–23","And gave him to be the head over all things to the church, Which is his body, the fulness of him that filleth all in all."]
+    ],
+    light:{L:[1,.08],R:[1,.08],arc:.1,motes:0}
+  },
+  christ:{
+    eyebrow:"Ephesians 5:23, 25–27, 29", title:"Christ", role:"Head of the church, Saviour of the body", accent:GOLD,
+    quote:[25], verses:[23,25,26,27,29],
+    points:[
+      ["He gave himself (v. 25)","Christ loved the church and gave himself for it. His headship is marked by sacrifice."],
+      ["He sanctifies by the Word (v. 26)","The washing of water by the word is the cleansing and sanctifying work of God's Word. It does not teach that water baptism washes away sin."],
+      ["He will present her glorious (v. 27)","His aim is a church holy and without blemish, with no spot or wrinkle."],
+      ["He nourishes and cherishes (v. 29)","The Lord cares for the church as a man cares for his own flesh."],
+      ["Saviour of the body (v. 23)","Here Christ stands alone. The husband follows his example, but cannot share this title."]
+    ],
+    supports:[
+      ["Colossians 1:18","And he is the head of the body, the church: who is the beginning, the firstborn from the dead; that in all things he might have the preeminence."],
+      ["Galatians 2:20","…the Son of God, who loved me, and gave himself for me."],
+      ["John 17:17","Sanctify them through thy truth: thy word is truth."]
+    ],
+    light:{L:[.14,.08],R:[1,.12],arc:.15,motes:.15}
+  },
+  husband:{
+    eyebrow:"Ephesians 5:25, 28–29, 33", title:"The Husband", role:"Love her as Christ loved the church", accent:GOLD,
+    quote:[25], verses:[25,28,29,33],
+    points:[
+      ["Love sacrificially","Paul does not stop at provide, lead or manage. He commands love on Christ's pattern. A husband must not use his position to serve his own interests at his wife's expense."],
+      ["Seek her spiritual good","As Christ sanctifies the church, a husband's love seeks his wife's good, including her spiritual welfare."],
+      ["Love her as your own body","He nourishes and cherishes her: care, consideration, protection and affection, beyond physical provision."],
+      ["The standard is Christ","His measure is neither other husbands nor what society calls a good husband. It is Christ himself."]
+    ],
+    supports:[
+      ["Colossians 3:19","Husbands, love your wives, and be not bitter against them."],
+      ["1 Peter 3:7","Likewise, ye husbands, dwell with them according to knowledge, giving honour unto the wife, as unto the weaker vessel, and as being heirs together of the grace of life; that your prayers be not hindered."]
+    ],
+    light:{L:[1,.12],R:[.4,.08],arc:.15,motes:0}
+  },
+  body:{
+    eyebrow:"Ephesians 5:24", title:"The Body", role:"Church · Wife", accent:PEARL,
+    quote:[24], verses:[24],
+    lead:"The left body is the wife. The right body is the church. As the church is subject unto Christ, so the wife to her own husband.",
+    points:[
+      ["The body follows the head","Paul uses the church's submission to Christ as the comparison for the wife."],
+      ["One person, not a lesser one","The body is not worth less than the head. Head and body belong together, and the head gives itself for the body."],
+      ["Ultimately to the Lord","Her submission is offered as unto the Lord, and it never requires disobeying God."]
+    ],
+    pair:[["church","Right figure","The Church","Subject unto Christ"],["wife","Left figure","Wife","To her own husband"]],
+    supports:[
+      ["Colossians 2:19","And not holding the Head, from which all the body by joints and bands having nourishment ministered, and knit together, increaseth with the increase of God."],
+      ["1 Corinthians 12:27","Now ye are the body of Christ, and members in particular."]
+    ],
+    light:{L:[.08,1],R:[.08,1],arc:.1,motes:1}
+  },
+  church:{
+    eyebrow:"Ephesians 5:24, 27, 29–30", title:"The Church", role:"Members of his body, of his flesh, and of his bones", accent:PEARL,
+    quote:[30], verses:[24,27,29,30],
+    points:[
+      ["Subject unto Christ (v. 24)","The church submits to Christ as her head."],
+      ["Members of his body (v. 30)","Every believer is a member. The points of light inside this figure picture the many members joined in one body."],
+      ["Nourished and cherished (v. 29)","Christ cares for the church because it is his own body."],
+      ["Presented glorious (v. 27)","The church is being made ready to be presented holy and without blemish."]
+    ],
+    supports:[
+      ["Romans 12:5","So we, being many, are one body in Christ, and every one members one of another."],
+      ["2 Corinthians 11:2","…for I have espoused you to one husband, that I may present you as a chaste virgin to Christ."],
+      ["Revelation 19:7","Let us be glad and rejoice, and give honour to him: for the marriage of the Lamb is come, and his wife hath made herself ready."]
+    ],
+    light:{L:[.08,.2],R:[.2,1],arc:.15,motes:1}
+  },
+  wife:{
+    eyebrow:"Ephesians 5:22, 24, 33", title:"The Wife", role:"Submit and reverence, as unto the Lord", accent:PEARL,
+    quote:[22], verses:[22,24,33],
+    points:[
+      ["“Your own husbands”","This concerns the marriage relationship. It does not tell women to submit to all men."],
+      ["“As unto the Lord”","Her submission is ultimately obedience to Christ. It is about honouring the Lord, more than pleasing her husband."],
+      ["Reverence (v. 33)","Respect and regard. She does not worship or fear her husband as she fears God."],
+      ["Within God's Word","Biblical submission never means obeying a command contrary to God's Word. Our ultimate submission belongs to God."]
+    ],
+    supports:[
+      ["Colossians 3:18","Wives, submit yourselves unto your own husbands, as it is fit in the Lord."],
+      ["1 Peter 3:1","Likewise, ye wives, be in subjection to your own husbands; that, if any obey not the word, they also may without the word be won by the conversation of the wives;"],
+      ["Acts 5:29","Then Peter and the other apostles answered and said, We ought to obey God rather than men."]
+    ],
+    light:{L:[.12,1],R:[.08,.4],arc:.15,motes:.3}
+  },
+  oneflesh:{
+    eyebrow:"Ephesians 5:31–32", title:"One", role:"This is a great mystery", accent:null,
+    quote:[31,32], verses:[31,32],
+    lead:"There are two unions here, and each has its own ring of light. Husband and wife become one flesh (v. 31). Christ and the church are one body (v. 30). The two unions stay distinct. The line between them shows how they relate: the first is a picture of the second (v. 32).",
+    points:[
+      ["Leaving","A man establishes a new primary family relationship, distinct from his relationship with his parents."],
+      ["Joining","Husband and wife are united in a covenant relationship."],
+      ["One flesh","A unique physical, relational and lifelong union."],
+      ["God's institution","Marriage was established at creation, before the fall."],
+      ["The great mystery","God designed marriage to picture Christ and the church. The two are not identical: marriage is the picture, and Christ and the church are what it points to."]
+    ],
+    supports:[
+      ["Genesis 2:24","Therefore shall a man leave his father and his mother, and shall cleave unto his wife: and they shall be one flesh."],
+      ["Matthew 19:6","Wherefore they are no more twain, but one flesh. What therefore God hath joined together, let not man put asunder."]
+    ],
+    light:{L:[1,1],R:[1,1],arc:.8,motes:.8,ring:1}
+  }
+};
+const KEYS = Object.keys(C);
+
+/* ---------------- Panel ---------------- */
+const panel = document.getElementById('panel');
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+function render(k){
+  const d = C[k];
+  panel.style.setProperty('--accent', d.accent || '');
+  if(!d.accent) panel.style.removeProperty('--accent');
+  const quote = d.quote.map(v=>`<p><span class="vn">${v}</span>${esc(KJV[v])}</p>`).join('');
+  let h = `<div class="eyebrow">${d.eyebrow}</div><h2>${d.title}</h2><p class="role">${d.role}</p>
+    <blockquote class="kjv">${quote}<cite>Ephesians 5:${d.quote.join('–')}</cite></blockquote>`;
+  if(d.lead) h += `<p class="lead">${esc(d.lead)}</p>`;
+  h += `<ul class="points">${d.points.map(([t,s])=>`<li><strong>${esc(t)}</strong><span>${esc(s)}</span></li>`).join('')}</ul>`;
+  if(d.pair) h += `<div class="pair">${d.pair.map(([key,side,name,sub])=>`<button data-go="${key}"><em>${side}</em><b>${name}</b><span>${sub}</span></button>`).join('')}</div>`;
+  if(d.summary){
+    h += `<div class="take">The husband is to love his wife as Christ loved the church, and the wife is to submit to her husband as the church submits to Christ.</div>
+    <h3>The passage at a glance</h3>
+    <table><thead><tr><th>Verses</th><th>Teaching</th><th>Responsibility</th></tr></thead><tbody>
+    <tr><td>21</td><td>Mutual submission</td><td>Submit to one another in the fear of God</td></tr>
+    <tr><td>22–24</td><td>The wife's role</td><td>Submit to her own husband as unto the Lord</td></tr>
+    <tr><td>25–27</td><td>The husband's example</td><td>Love sacrificially, as Christ loved the church</td></tr>
+    <tr><td>28–30</td><td>The husband's care</td><td>Nourish and cherish his wife as his own body</td></tr>
+    <tr><td>31–32</td><td>God's design</td><td>Two become one flesh; marriage pictures Christ and the church</td></tr>
+    <tr><td>33</td><td>Conclusion</td><td>Husband loves; wife reverences</td></tr>
+    </tbody></table>
+    <h3>Five lessons</h3>
+    <ol class="lessons">
+      <li><b>Marriage is God's institution,</b> founded in Genesis 2:24, before the fall.</li>
+      <li><b>The husband has the responsibility of headship,</b> reflecting Christ's sacrificial love.</li>
+      <li><b>The wife has the responsibility of submission and reverence,</b> as obedience to the Lord.</li>
+      <li><b>Both have responsibilities toward one another.</b> Neither may neglect the other.</li>
+      <li><b>Marriage points us to Christ and his church.</b></li>
+    </ol>`;
+  }
+  h += `<h3>Supporting verses</h3><div class="support">${d.supports.map(([r,t])=>`<div><cite>${r}</cite>${esc(t)}</div>`).join('')}</div>`;
+  h += `<h3>In the passage</h3><div class="passage">${Object.keys(KJV).map(v=>`<span class="${d.verses.includes(+v)?'on':''}"><span class="vn">${v}</span>${esc(KJV[v])} </span>`).join('')}</div>`;
+  panel.innerHTML = h;
+  panel.scrollTop = 0;
+}
+panel.addEventListener('click', e=>{ const b=e.target.closest('[data-go]'); if(b) select(b.dataset.go); });
+
+/* ---------------- Mode state ---------------- */
+let current = 'overview';
+const modeBtns = [...document.querySelectorAll('.mode')];
+const parentOf = {christ:'head',husband:'head',church:'body',wife:'body'};
+function select(k, fromHash){
+  if(!C[k]) k='overview';
+  current = k;
+  const group = parentOf[k] || k;
+  modeBtns.forEach(b=>b.setAttribute('aria-pressed', b.dataset.k===group));
+  render(k);
+  if(window.__onSelect) window.__onSelect(k);
+  if(!fromHash){ try{ history.replaceState(null,'','#'+k); }catch(e){} }
+}
+modeBtns.forEach(b=>b.addEventListener('click',()=>select(b.dataset.k)));
+window.addEventListener('hashchange',()=>select(location.hash.slice(1),true));
+select(location.hash.slice(1)||'overview', true);
+
+/* ---------------- 3D ---------------- */
+const stage = document.getElementById('stage');
+let renderer;
+try{
+  renderer = new THREE.WebGLRenderer({antialias:true, powerPreference:'high-performance'});
+}catch(e){
+  stage.insertAdjacentHTML('afterbegin','<div class="nogl">This browser could not start 3D graphics. The study notes on the side still work.</div>');
+  throw e;
+}
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+stage.prepend(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#090d1a');
+const camera = new THREE.PerspectiveCamera(34, 1, .05, 100);
+camera.position.set(0,1.35,6.4);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0,1.0,0);
+controls.enableDamping = true;
+controls.minDistance = 2; controls.maxDistance = 11;
+controls.maxPolarAngle = Math.PI*0.62;
+controls.enablePan = false;
+
+const shared = { uTime:{value:0} };
+
+/* background gradient dome */
+{
+  const g = new THREE.SphereGeometry(40,32,16);
+  const m = new THREE.ShaderMaterial({
+    side:THREE.BackSide, depthWrite:false,
+    uniforms:{a:{value:new THREE.Color('#05070f')}, b:{value:new THREE.Color('#1a2247')}},
+    vertexShader:`varying vec3 p; void main(){ p=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);} `,
+    fragmentShader:`uniform vec3 a,b; varying vec3 p; void main(){ float t=smoothstep(-.2,.6,p.y); float h=exp(-pow(p.y*3.,2.))*.35; gl_FragColor=vec4(mix(a,b,t*.6)+b*h,1.);} `
+  });
+  const s = new THREE.Mesh(g,m); s.renderOrder=-10; scene.add(s);
+}
+
+/* point sprite shader (dust + members) */
+function pointsMat(color, additive=true){
+  return new THREE.ShaderMaterial({
+    transparent:true, depthWrite:false, blending: additive?THREE.AdditiveBlending:THREE.NormalBlending,
+    uniforms:{uTime:shared.uTime, uPix:{value:renderer.getPixelRatio()*90}, uAmt:{value:1}, uColor:{value:new THREE.Color(color)}, uDrift:{value:0}},
+    vertexShader:`attribute float aPhase; attribute float aSize; uniform float uTime,uPix,uAmt,uDrift; varying float vA;
+      void main(){ vec3 p=position; p.y=mod(p.y+uTime*uDrift*(.5+fract(aPhase)),4.2)-.3;
+        vec4 mv=modelViewMatrix*vec4(p,1.); gl_Position=projectionMatrix*mv;
+        gl_PointSize=aSize*uPix/-mv.z; vA=uAmt*(.45+.55*sin(uTime*1.3+aPhase*6.283)); }`,
+    fragmentShader:`uniform vec3 uColor; varying float vA; void main(){ float d=length(gl_PointCoord-.5); float a=smoothstep(.5,0.,d); gl_FragColor=vec4(uColor,a*a*vA);} `
+  });
+}
+{
+  const N=700, pos=new Float32Array(N*3), ph=new Float32Array(N), sz=new Float32Array(N);
+  for(let i=0;i<N;i++){ pos[i*3]=(Math.random()-.5)*12; pos[i*3+1]=Math.random()*4.2-.3; pos[i*3+2]=(Math.random()-.5)*8-1; ph[i]=Math.random(); sz[i]=.5+Math.random()*1.2; }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3)); g.setAttribute('aPhase',new THREE.BufferAttribute(ph,1)); g.setAttribute('aSize',new THREE.BufferAttribute(sz,1));
+  const m=pointsMat('#8fa6d8'); m.uniforms.uAmt.value=.28; m.uniforms.uDrift.value=reduced?0:.05;
+  const p=new THREE.Points(g,m); p.renderOrder=-5; scene.add(p);
+}
+
+/* figure shader */
+const figVS = `varying vec3 vN; varying vec3 vV; varying float vY;
+void main(){ vec4 wp=modelMatrix*vec4(position,1.); vY=wp.y; vN=normalize(normalMatrix*normal);
+  vec4 mv=modelViewMatrix*vec4(position,1.); vV=normalize(-mv.xyz); gl_Position=projectionMatrix*mv; }`;
+const figFS = `uniform float uHead,uBody,uTime,uNeck,uHover,uHoverZone,uFade; uniform vec3 uBase,uHeadCol,uBodyCol;
+varying vec3 vN; varying vec3 vV; varying float vY;
+void main(){
+  float f=1.-clamp(abs(dot(normalize(vN),normalize(vV))),0.,1.);
+  float rim=pow(f,2.6);
+  float zone=smoothstep(uNeck-.035,uNeck+.035,vY);
+  float flow=.92+.08*sin(uTime*1.2);
+  float hov=uHover*mix(1.-uHoverZone,uHoverZone,zone);
+  float g=mix(uBody,uHead,zone)+hov*.22;
+  vec3 gc=mix(uBodyCol,uHeadCol,zone);
+  vec3 N=normalize(vN), V=normalize(vV);
+  vec3 L1=normalize(vec3(-.4,.35,.85)), L2=normalize(vec3(.6,.15,.8));
+  float dif=max(dot(N,L1),0.);
+  float sp=pow(max(dot(N,normalize(L1+V)),0.),36.);
+  float sp2=pow(max(dot(N,normalize(L2+V)),0.),70.);
+  vec3 col=uBase*(.03+rim*.6+dif*.22)+gc*g*(.09+rim*.85+dif*.2)*flow+vec3(sp*.3+sp2*.14);
+  float a=.05+rim*.4+dif*.1+sp*.25+sp2*.12+g*(.14+rim*.26+dif*.1);
+  gl_FragColor=vec4(col*uFade,clamp(a,0.,1.)*uFade);
+}`;
+
+const NECK = 1.49;
+const pickables = [];
+const UP = new THREE.Vector3(0,1,0);
+
+/* The figure: a pictogram person made solid. Round head floating above a shoulder block,
+   arms as separate rounded bars, two leg pillars. Built as a distance field (units: pictogram px, 1px = 6mm). */
+const PX=.006;
+function bodySDF(x,y,z){
+  x/=PX; y/=PX; z/=PX;
+  const smin=(a,b,k)=>{ const h=Math.max(k-Math.abs(a-b),0)/k; return Math.min(a,b)-h*h*k*.25; };
+  const rbox=(px,py,pz,cx,cy,cz,bx,by,bz,r)=>{
+    const qx=Math.abs(px-cx)-bx+r, qy=Math.abs(py-cy)-by+r, qz=Math.abs(pz-cz)-bz+r;
+    return Math.hypot(Math.max(qx,0),Math.max(qy,0),Math.max(qz,0))+Math.min(Math.max(qx,Math.max(qy,qz)),0)-r; };
+  // body: the 2D pictogram outline at one even thickness (same as the arms), every edge rolled into a half-circle
+  const d=outlineDepth(x,y), R=8.5;
+  const qa=d+R, qb=Math.abs(z);
+  const body=Math.hypot(Math.max(qa,0),qb)+Math.min(Math.max(qa,qb),0)-R;
+  // head stays separate: a full sphere
+  const head=Math.hypot(x,y-279,z)-25;
+  return Math.min(body,head)*PX;
+}
+/* 2D distance to the pictogram body outline, softened so the inflated surface has no creases */
+let _odGrid=null;
+const OD={x0:-72,y0:-12,w:145,h:270};
+function outlineDepth(x,y){
+  if(!_odGrid){
+    const rb2=(px,py,cx,cy,bx,by,r)=>{ const qx=Math.abs(px-cx)-bx+r, qy=Math.abs(py-cy)-by+r;
+      return Math.hypot(Math.max(qx,0),Math.max(qy,0))+Math.min(Math.max(qx,qy),0)-r; };
+    const smin=(a,b,k)=>{ const h=Math.max(k-Math.abs(a-b),0)/k; return Math.min(a,b)-h*h*k*.25; };
+    const raw=new Float32Array(OD.w*OD.h);
+    for(let j=0;j<OD.h;j++) for(let i=0;i<OD.w;i++){
+      const X=Math.abs(OD.x0+i), Y=OD.y0+j;
+      let d=rb2(X,Y,0,210,62,32,32);                    // shoulders: large round curve sloping into each arm
+      d=smin(d,rb2(X,Y,52,162,10,49,10),5);             // arm hangs from inside the curve, reaching a little lower
+      let t=rb2(X,Y,0,183.5,33,58.5,0);                 // torso
+      t=smin(t,rb2(X,Y,19,71,14.5,71,14.5),5);          // legs (gap between)
+      const slit=rb2(X,Y,37.5,150,4.5,52,4.5);          // slit beside each arm, armpit raised to y≈202
+      raw[i+j*OD.w]=Math.max(Math.min(d,t),-slit);
+    }
+    // three box-blur passes ≈ gaussian, removes the ridge lines inside each part
+    let a=raw, b=new Float32Array(raw.length); const r=3;
+    for(let pass=0;pass<5;pass++){
+      for(let j=0;j<OD.h;j++) for(let i=0;i<OD.w;i++){ let s=0,n=0; for(let k=-r;k<=r;k++){ const ii=i+k; if(ii<0||ii>=OD.w) continue; s+=a[ii+j*OD.w]; n++; } b[i+j*OD.w]=s/n; }
+      for(let j=0;j<OD.h;j++) for(let i=0;i<OD.w;i++){ let s=0,n=0; for(let k=-r;k<=r;k++){ const jj=j+k; if(jj<0||jj>=OD.h) continue; s+=b[i+jj*OD.w]; n++; } a[i+j*OD.w]=s/n; }
+    }
+    _odGrid=a;
+  }
+  const fx=Math.min(Math.max(x-OD.x0,0),OD.w-1.001), fy=Math.min(Math.max(y-OD.y0,0),OD.h-1.001);
+  const i=fx|0, j=fy|0, u=fx-i, v=fy-j, g=_odGrid, W=OD.w;
+  return (g[i+j*W]*(1-u)+g[i+1+j*W]*u)*(1-v)+(g[i+(j+1)*W]*(1-u)+g[i+1+(j+1)*W]*u)*v;
+}
+let _bodyGeo=null;
+function bodyGeometry(){
+  if(_bodyGeo) return _bodyGeo;
+  const R=180, S=.94, CY=.91, size=R, size2=R*R, half=R/2;
+  const mc=new MarchingCubes(R,new THREE.MeshBasicMaterial(),false,false,320000);
+  const f=mc.field; f.fill(-1000);
+  for(let k=0;k<R;k++){ const z=(k-half)/half*S; if(Math.abs(z)>.2) continue;
+    for(let j=0;j<R;j++){ const y=(j-half)/half*S+CY;
+      for(let i=0;i<R;i++){ const x=(i-half)/half*S; if(Math.abs(x)>.42) continue;
+        f[i+j*size+k*size2]=80-bodySDF(x,y,z)*1100; } } }
+  mc.isolation=80; mc.update();
+  const n=mc.count, g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(mc.positionArray.slice(0,n*3),3));
+  g.setAttribute('normal',new THREE.BufferAttribute(mc.normalArray.slice(0,n*3),3));
+  g.scale(S,S,S); g.translate(0,CY,0); g.computeBoundingSphere();
+  mc.geometry.dispose();
+  return _bodyGeo=g;
+}
+
+function makeFigure(side, x, rotY){
+  const root = new THREE.Group(); root.position.x=x; root.rotation.y=rotY; scene.add(root);
+  const uniforms = {
+    uTime:shared.uTime, uHead:{value:.2}, uBody:{value:.2}, uNeck:{value:NECK},
+    uHover:{value:0}, uHoverZone:{value:0}, uFade:{value:1},
+    uBase:{value:new THREE.Color('#a9bce6')}, uHeadCol:{value:new THREE.Color(GOLD)}, uBodyCol:{value:new THREE.Color(PEARL)}
+  };
+  const mat = new THREE.ShaderMaterial({uniforms, vertexShader:figVS, fragmentShader:figFS, transparent:true, depthWrite:false, depthFunc:THREE.LessEqualDepth});
+  const pre = new THREE.MeshBasicMaterial({colorWrite:false, transparent:true, depthWrite:true});
+  function add(geo, pos, quat, scale){
+    const a=new THREE.Mesh(geo,pre), b=new THREE.Mesh(geo,mat);
+    for(const m of [a,b]){ if(pos)m.position.copy(pos); if(quat)m.quaternion.copy(quat); if(scale)m.scale.copy(scale); root.add(m); }
+    a.renderOrder=1; b.renderOrder=2; a.userData.side=side; pickables.push(a);
+  }
+  add(bodyGeometry());
+  // floor halo
+  const haloMat = new THREE.ShaderMaterial({transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
+    uniforms:{uAmt:{value:.3}, uCol:{value:new THREE.Color('#9fb6ea')}},
+    vertexShader:`varying vec2 u; void main(){u=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);} `,
+    fragmentShader:`uniform float uAmt; uniform vec3 uCol; varying vec2 u; void main(){ float d=length(u-.5)*2.; float ring=smoothstep(.03,0.,abs(d-.78)); float disc=smoothstep(1.,0.,d)*.35; gl_FragColor=vec4(uCol,(ring*.9+disc)*uAmt);} `});
+  const halo=new THREE.Mesh(new THREE.PlaneGeometry(1.2,1.2),haloMat); halo.rotation.x=-Math.PI/2; halo.position.y=.002; halo.renderOrder=-3; root.add(halo);
+  // union ring: one ring per pair, enclosing head and body together
+  const ringMat = new THREE.ShaderMaterial({transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
+    uniforms:{uAmt:{value:0}, uA:{value:new THREE.Color(GOLD)}, uB:{value:new THREE.Color(PEARL)}},
+    vertexShader:`varying float vY; void main(){ vY=position.y; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);} `,
+    fragmentShader:`uniform float uAmt; uniform vec3 uA,uB; varying float vY; void main(){ gl_FragColor=vec4(mix(uB,uA,smoothstep(1.2,1.75,vY)),uAmt*.85);} `});
+  const pts=[]; for(let i=0;i<160;i++){ const a=i/160*Math.PI*2; pts.push(new THREE.Vector3(Math.cos(a)*.6, .92+Math.sin(a)*1.04, -.06)); }
+  const ring=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts,true),200,.006,6,true),ringMat); ring.renderOrder=-2; root.add(ring);
+  return {root, uniforms, haloMat, ringMat, side};
+}
+
+const figL = makeFigure('L',-1.18,.16);
+const figR = makeFigure('R', 1.18,-.16);
+
+/* members of the body: motes inside the right figure */
+const motesMat = pointsMat(PEARL);
+{
+  const pts=[]; let guard=0;
+  while(pts.length<1560 && guard++<200000){ const x=(Math.random()-.5)*.76,y=Math.random()*1.5,z=(Math.random()-.5)*.28; if(bodySDF(x,y,z)<-.012) pts.push(x,y,z); }
+  const n=pts.length/3, ph=new Float32Array(n), sz=new Float32Array(n);
+  for(let i=0;i<n;i++){ ph[i]=Math.random(); sz[i]=.35+Math.random()*.55; }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(pts,3)); g.setAttribute('aPhase',new THREE.BufferAttribute(ph,1)); g.setAttribute('aSize',new THREE.BufferAttribute(sz,1));
+  const p=new THREE.Points(g,motesMat); p.renderOrder=0; figR.root.add(p);
+}
+
+/* v. 21: members of the church, submitting one to another */
+const crowd = new THREE.Group(); scene.add(crowd);
+const CS=.42, CROWD_N=8, CR=.8, CZ=1.05;
+const crowdU = {
+  uTime:shared.uTime, uHead:{value:.55}, uBody:{value:.55}, uNeck:{value:NECK*CS},
+  uHover:{value:0}, uHoverZone:{value:0}, uFade:{value:0},
+  uBase:{value:new THREE.Color('#a9bce6')}, uHeadCol:{value:new THREE.Color('#e9d3a6')}, uBodyCol:{value:new THREE.Color(PEARL)}
+};
+{
+  const mat=new THREE.ShaderMaterial({uniforms:crowdU, vertexShader:figVS, fragmentShader:figFS, transparent:true, depthWrite:false, depthFunc:THREE.LessEqualDepth});
+  const pre=new THREE.MeshBasicMaterial({colorWrite:false, transparent:true, depthWrite:true});
+  const seats=[];
+  for(let i=0;i<CROWD_N;i++){
+    const a=i/CROWD_N*Math.PI*2+Math.PI/CROWD_N;
+    const x=Math.cos(a)*CR, z=CZ+Math.sin(a)*CR*.55;
+    seats.push([x,z]);
+    for(const [m,o] of [[pre,3],[mat,4]]){
+      const mesh=new THREE.Mesh(bodyGeometry(),m); mesh.scale.setScalar(CS); mesh.position.set(x,0,z);
+      mesh.rotation.y=Math.atan2(-x,CZ-z); mesh.renderOrder=o; crowd.add(mesh);
+    }
+  }
+  // every member linked to every other: "one to another"
+  const seg=[];
+  for(let i=0;i<CROWD_N;i++) for(let j=i+1;j<CROWD_N;j++) seg.push(seats[i][0],.5,seats[i][1],seats[j][0],.5,seats[j][1]);
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(seg,3));
+  const lm=new THREE.LineBasicMaterial({color:new THREE.Color('#d9c9a4'),transparent:true,opacity:0,depthWrite:false,blending:THREE.AdditiveBlending});
+  const lines=new THREE.LineSegments(g,lm); lines.renderOrder=-1; crowd.add(lines);
+  crowd.userData.lines=lm;
+}
+
+/* the link between the two unions */
+const arcMat = new THREE.ShaderMaterial({transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
+  uniforms:{uTime:shared.uTime, uAmt:{value:0}, uA:{value:new THREE.Color(GOLD)}, uB:{value:new THREE.Color(PEARL)}},
+  vertexShader:`varying vec2 u; void main(){u=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);} `,
+  fragmentShader:`uniform float uTime,uAmt; uniform vec3 uA,uB; varying vec2 u;
+    void main(){ float dash=smoothstep(.0,.5,fract(u.x*9.-uTime*.35)); float ends=smoothstep(0.,.08,u.x)*smoothstep(1.,.92,u.x);
+      gl_FragColor=vec4(mix(uA,uB,u.x),uAmt*ends*(.25+.75*dash));}`});
+{
+  const curve=new THREE.CatmullRomCurve3([new THREE.Vector3(-.58,1.18,0),new THREE.Vector3(0,1.2,0),new THREE.Vector3(.58,1.18,0)]);
+  const m=new THREE.Mesh(new THREE.TubeGeometry(curve,120,.009,8,false),arcMat); m.renderOrder=-2; scene.add(m);
+}
+
+/* post */
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene,camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(256,256), .75, .5, .18);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+
+/* labels */
+const labelsEl = document.getElementById('labels');
+function tag(cls, html){ const d=document.createElement('div'); d.className='tag '+cls; d.innerHTML=html; labelsEl.appendChild(d); return d; }
+const tags = [
+  {el:tag('base','Husband &amp; Wife<small>the picture</small>'), fig:figL, p:[0,-.16,.15], always:true},
+  {el:tag('base','Christ &amp; the Church<small>the reality</small>'), fig:figR, p:[0,-.16,.15], always:true},
+  {el:tag('h','Husband'), fig:figL, p:[-.4,1.67,0], zone:'head'},
+  {el:tag('b','Wife'), fig:figL, p:[-.52,1.0,0], zone:'body'},
+  {el:tag('h','Christ'), fig:figR, p:[.4,1.67,0], zone:'head'},
+  {el:tag('b','Church'), fig:figR, p:[.52,1.0,0], zone:'body'},
+  {el:tag('arc','a picture of →'), arc:true, p:[0,1.31,0]},
+  {el:tag('arc','one to another · v. 21'), crowd:true, p:[0,.98,CZ]},
+  {el:tag('arc','one flesh · v. 31'), ring:figL, fig:figL, p:[0,2.06,0]},
+  {el:tag('arc','one body · v. 30'), ring:figR, fig:figR, p:[0,2.06,0]}
+];
+const tmp=new THREE.Vector3();
+function placeLabels(w,h){
+  for(const t of tags){
+    tmp.set(...t.p);
+    if(t.fig) t.fig.root.localToWorld(tmp);
+    tmp.project(camera);
+    const vis = tmp.z<1;
+    t.el.style.left=((tmp.x*.5+.5)*w)+'px';
+    t.el.style.top=((-tmp.y*.5+.5)*h)+'px';
+    let o = t.always ? .9*(1-crowdU.uFade.value) : t.crowd ? (crowdU.uFade.value>.5?1:0) : t.ring ? (t.ring.ringMat.uniforms.uAmt.value>.5?1:0) : t.arc ? (arcMat.uniforms.uAmt.value>.6?1:0)
+      : ((t.zone==='head'?t.fig.uniforms.uHead.value:t.fig.uniforms.uBody.value)>.55?1:0);
+    t.el.style.opacity = vis?o:0;
+  }
+}
+
+/* views */
+const VIEWS = {
+  front:{pos:[0,1.35,6.4], tgt:[0,1.0,0]},
+  left:{pos:[-1.6,1.45,3.3], tgt:[-1.18,1.05,0]},
+  right:{pos:[1.6,1.45,3.3], tgt:[1.18,1.05,0]},
+  three:{pos:[4.6,1.7,4.2], tgt:[0,1.0,0]},
+  above:{pos:[0,6.2,2.6], tgt:[0,.8,0]},
+  circle:{pos:[0,3.3,5.6], tgt:[0,.55,.6]}
+};
+let tween=null;
+const chips=[...document.querySelectorAll('[data-view]')];
+function goView(k){
+  chips.forEach(c=>c.setAttribute('aria-pressed',c.dataset.view===k));
+  const v=VIEWS[k];
+  tween={pos:new THREE.Vector3(...v.pos), tgt:new THREE.Vector3(...v.tgt)};
+  if(reduced){ camera.position.copy(tween.pos); controls.target.copy(tween.tgt); tween=null; }
+}
+chips.forEach(c=>c.addEventListener('click',()=>{ inCircle=false; goView(c.dataset.view); }));
+controls.addEventListener('start',()=>{ tween=null; inCircle=false; chips.forEach(c=>c.setAttribute('aria-pressed','false')); });
+// "One to another" rises to look down on the circle of members; leaving it returns to the front
+let inCircle=false;
+window.__onSelect = k => {
+  if(k==='overview'){ inCircle=true; goView('circle'); chips.forEach(c=>c.setAttribute('aria-pressed','false')); }
+  else if(inCircle){ inCircle=false; goView('front'); }
+};
+window.__onSelect(current);
+
+/* picking */
+const ray=new THREE.Raycaster(), ndc=new THREE.Vector2();
+let hover=null, downAt=null;
+function pick(e){
+  const r=renderer.domElement.getBoundingClientRect();
+  ndc.set(((e.clientX-r.left)/r.width)*2-1, -((e.clientY-r.top)/r.height)*2+1);
+  ray.setFromCamera(ndc,camera);
+  const hit=ray.intersectObjects(pickables,false)[0];
+  if(!hit) return null;
+  return {side:hit.object.userData.side, zone: hit.point.y>NECK?'head':'body'};
+}
+renderer.domElement.addEventListener('pointermove',e=>{ if(e.pointerType==='touch') return; hover=pick(e); renderer.domElement.style.cursor=hover?'pointer':''; });
+renderer.domElement.addEventListener('pointerleave',()=>{hover=null;});
+renderer.domElement.addEventListener('pointerdown',e=>{downAt=[e.clientX,e.clientY];});
+renderer.domElement.addEventListener('pointerup',e=>{
+  if(!downAt) return; const moved=Math.hypot(e.clientX-downAt[0],e.clientY-downAt[1]); downAt=null;
+  if(moved>6) return;
+  const p=pick(e);
+  if(!p){ return; }
+  const map={L:{head:'husband',body:'wife'},R:{head:'christ',body:'church'}};
+  select(map[p.side][p.zone]);
+});
+
+/* resize */
+function resize(){
+  const w=stage.clientWidth, h=stage.clientHeight;
+  renderer.setSize(w,h,false); composer.setSize(w,h);
+  camera.aspect=w/h;
+  camera.fov = w/h < .9 ? 50 : 34;
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage); resize();
+
+/* loop */
+const clock=new THREE.Clock();
+const ease=(a,b,k)=>a+(b-a)*k;
+function tick(){
+  const dt=Math.min(clock.getDelta(),.05);
+  shared.uTime.value += reduced?0:dt;
+  const L=C[current].light, k=1-Math.pow(.004,dt);
+  for(const [fig,key] of [[figL,'L'],[figR,'R']]){
+    const u=fig.uniforms;
+    u.uHead.value=ease(u.uHead.value,L[key][0],k);
+    u.uBody.value=ease(u.uBody.value,L[key][1],k);
+    const hv = hover && hover.side===key;
+    u.uHover.value=ease(u.uHover.value,hv?1:0,k*1.5);
+    if(hv) u.uHoverZone.value = hover.zone==='head'?1:0;
+    fig.haloMat.uniforms.uAmt.value=.22+.5*Math.max(u.uHead.value,u.uBody.value);
+    fig.ringMat.uniforms.uAmt.value=ease(fig.ringMat.uniforms.uAmt.value,L.ring||0,k);
+    if(!reduced) fig.root.rotation.y = (key==='L'?.16:-.16) + Math.sin(shared.uTime.value*.4+(key==='L'?0:1.7))*.05;
+  }
+  arcMat.uniforms.uAmt.value=ease(arcMat.uniforms.uAmt.value,L.arc,k);
+  crowdU.uFade.value=ease(crowdU.uFade.value,L.crowd||0,k);
+  crowd.visible=crowdU.uFade.value>.01;
+  crowd.userData.lines.opacity=crowdU.uFade.value*.22;
+  const mainFade = 1-.6*crowdU.uFade.value;
+  figL.uniforms.uFade.value=mainFade; figR.uniforms.uFade.value=mainFade;
+  motesMat.uniforms.uAmt.value=ease(motesMat.uniforms.uAmt.value,L.motes,k);
+  if(tween){
+    const tk=1-Math.pow(.02,dt);
+    camera.position.lerp(tween.pos,tk); controls.target.lerp(tween.tgt,tk);
+    if(camera.position.distanceTo(tween.pos)<.01) tween=null;
+  }
+  controls.update();
+  composer.render();
+  placeLabels(stage.clientWidth, stage.clientHeight);
+  requestAnimationFrame(tick);
+}
+tick();
+</script>
+
+</body>
+</html>
